@@ -1,0 +1,277 @@
+{
+  "benchmark/clean/example_server_calendar.py": {
+    "expected": "clean",
+    "categories": []
+  },
+  "benchmark/clean/example_server_configuration.py": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "benign_config_environ_no_decorator",
+    "note": "P8-2: os.environ access in a config/loader function without a @*.tool decorator. After switching the unscoped-environ rule to be decorator-based, this must no longer produce a finding."
+  },
+  "benchmark/clean/example_server_appointments.py": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "benign_keyword_candidate",
+    "note": "Docstring contains 'you must' in a harmless API documentation context. The tool poisoning rule (P2-5) may only flag it as a candidate for layer-2 review, never as a hard error - see P3-1 DoD."
+  },
+  "benchmark/clean/example_server_notes.py": {
+    "expected": "clean",
+    "categories": []
+  },
+  "benchmark/clean/example_server_weather.py": {
+    "expected": "clean",
+    "categories": []
+  },
+  "benchmark/rugpull/example_email_bcc_v1.py": {
+    "expected": "clean",
+    "categories": [],
+    "pair": "example_email_bcc"
+  },
+  "benchmark/rugpull/example_email_bcc_v2.py": {
+    "expected": "finding",
+    "categories": ["Tool Poisoning"],
+    "pair": "example_email_bcc",
+    "pattern": "rugpull_hidden_bcc"
+  },
+  "benchmark/rugpull/example_search_schema_v1.py": {
+    "expected": "clean",
+    "categories": [],
+    "pair": "example_search_schema"
+  },
+  "benchmark/rugpull/example_search_schema_v2.py": {
+    "expected": "finding",
+    "categories": ["Tool Poisoning"],
+    "pair": "example_search_schema",
+    "pattern": "rugpull_tool_schema_change"
+  },
+  "benchmark/vulnerable/hardcoded_api_key.py": {
+    "expected": "finding",
+    "categories": ["Hardcoded Secret"],
+    "pattern": "hardcoded_api_key"
+  },
+  "benchmark/vulnerable/header_dump.py": {
+    "expected": "finding",
+    "categories": ["Header Leak"],
+    "pattern": "header_dump"
+  },
+  "benchmark/vulnerable/unscoped_environ.py": {
+    "expected": "finding",
+    "categories": ["Unscoped Environment Access", "Missing Audit Logging"],
+    "pattern": "unscoped_environ",
+    "note": "P8-2: the function now has a real @mcp.tool() decorator (see STATUS.md) so that the new decorator-based unscoped-environ rule still fires. Side effect: the function has no logging and therefore now also matches missing-audit."
+  },
+  "benchmark/vulnerable/tool_poisoning_docstring.py": {
+    "expected": "finding",
+    "categories": ["Tool Poisoning"],
+    "pattern": "tool_poisoning_docstring"
+  },
+  "benchmark/vulnerable/command_injection.py": {
+    "expected": "finding",
+    "categories": ["Command Injection"],
+    "pattern": "command_injection"
+  },
+  "benchmark/vulnerable/resource_secret_leak.py": {
+    "expected": "finding",
+    "categories": ["Unscoped Environment Access", "Missing Audit Logging"],
+    "pattern": "resource_secret_leak",
+    "note": "P9-1: proof that unscoped-environ now also fires for @mcp.resource(...), not only for @mcp.tool() - previously completely invisible (blind spot from STATUS.md). Side effect as with P8-2: the function has no logging and therefore also matches missing-audit."
+  },
+  "benchmark/vulnerable/prompt_missing_audit.py": {
+    "expected": "finding",
+    "categories": ["Missing Audit Logging"],
+    "pattern": "prompt_missing_audit",
+    "note": "P9-1: proof that missing-audit now also fires for @mcp.prompt(), not only for @mcp.tool() - previously completely invisible (blind spot from STATUS.md)."
+  },
+  "benchmark/clean/example_server_help.py": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "benign_resource_prompt_done_correctly",
+    "note": "P9-2: counter-check to P9-1 - correctly implemented resource and prompt handlers (no secrets, with logging) must not trigger a finding for either rule."
+  },
+  "benchmark/vulnerable/async_tool_leak.py": {
+    "expected": "finding",
+    "categories": ["Unscoped Environment Access", "Missing Audit Logging"],
+    "pattern": "async_tool_leak",
+    "note": "P9-2: proof that unscoped-environ and missing-audit also fire for async def tools - previously 0 coverage for async in the whole benchmark, even though tool_schema.py already supports ast.AsyncFunctionDef."
+  },
+  "benchmark/vulnerable/typosquat_server_name.py": {
+    "expected": "finding",
+    "categories": ["Typosquatting / Shadow-Server"],
+    "pattern": "typosquat_near_miss"
+  },
+  "benchmark/clean/example_server_translation.py": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "distinctive_non_colliding_name",
+    "note": "P11-2: server name chosen long and distinctive to stay guaranteed below the 70% similarity threshold to all 417 entries of the curated list - negative test case against false alarms."
+  },
+  "benchmark/vulnerable/capability_mismatch_network.py": {
+    "expected": "finding",
+    "categories": ["Capability Mismatch", "Missing Audit Logging"],
+    "pattern": "capability_mismatch_undisclosed_network_call",
+    "note": "P11-1: the tool docstring only promises 'read a note', but the body calls requests.post() - neither name nor docstring mentions the network. Side effect as with P8-2/P9-1: no logging, therefore also matches missing-audit."
+  },
+  "benchmark/vulnerable/capability_mismatch_email.py": {
+    "expected": "finding",
+    "categories": ["Capability Mismatch", "Missing Audit Logging"],
+    "pattern": "capability_mismatch_undisclosed_email_call",
+    "note": "P11-1: the tool docstring only promises weather data, but the body opens an SMTP connection - neither name nor docstring mentions email. Same missing-audit side effect as above."
+  },
+  "benchmark/clean/example_server_notification.py": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "capability_mismatch_disclosed_via_keyword_hint",
+    "note": "P11-1: calls smtplib like the vulnerable email fixture, but name/docstring explicitly mention the capability ('send'/'email') - proof that the keyword filter in the orchestrator genuinely suppresses, rather than merely finding nothing by chance."
+  },
+  "benchmark/vulnerable/resource_output_injection.py": {
+    "expected": "finding",
+    "categories": ["Tool Poisoning"],
+    "pattern": "tool_poisoning_resource_output",
+    "note": "P11-3: hidden instruction in the RETURN VALUE of a @mcp.resource handler, docstring is harmless. Only the new return-value rule can catch this."
+  },
+  "benchmark/vulnerable/tool_output_injection.py": {
+    "expected": "finding",
+    "categories": ["Tool Poisoning"],
+    "pattern": "tool_poisoning_tool_output_fstring",
+    "note": "P11-3: hidden instruction in the RETURN VALUE (f-string) of a @mcp.tool() handler, docstring is harmless."
+  },
+  "benchmark/vulnerable/prompt_output_injection.py": {
+    "expected": "finding",
+    "categories": ["Tool Poisoning"],
+    "pattern": "tool_poisoning_prompt_output",
+    "note": "P11-3: hidden instruction in the RETURN VALUE of a @mcp.prompt handler (decorator without parentheses), docstring is harmless."
+  },
+  "benchmark/vulnerable/manifest_hidden_tool/manifest.json": {
+    "expected": "finding",
+    "categories": ["Supply Chain"],
+    "pattern": "manifest_hidden_tool",
+    "note": "P11-4: server.py registers export_all_notes, but the manifest only declares list_notes and add_note - a hidden tool."
+  },
+  "benchmark/vulnerable/manifest_hidden_tool/server.py": {
+    "expected": "clean",
+    "categories": [],
+    "note": "P11-4: the code itself is harmless for all other rules; only the manifest mismatch is the signal."
+  },
+  "benchmark/clean/manifest_matching/manifest.json": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "manifest_matches_code",
+    "note": "P11-4: all three registered tools are declared - must stay clean."
+  },
+  "benchmark/clean/manifest_matching/server.py": {
+    "expected": "clean",
+    "categories": []
+  },
+  "benchmark/vulnerable/command_injection.ts": {
+    "expected": "finding",
+    "categories": ["Command Injection"],
+    "pattern": "command_injection_node_exec_template",
+    "note": "P12-2: TypeScript MCP server, exec() with a template string containing a handler parameter."
+  },
+  "benchmark/clean/command_execution.ts": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "node_execfile_argument_list",
+    "note": "P12-2: same purpose but execFile with an argument list - no shell, must stay clean."
+  },
+  "benchmark/vulnerable/unscoped_environ.ts": {
+    "expected": "finding",
+    "categories": ["Unscoped Environment Access"],
+    "pattern": "unscoped_environ_node",
+    "note": "P12-3: process.env read inside a registerTool callback (TypeScript)."
+  },
+  "benchmark/clean/env_at_startup.ts": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "node_env_read_at_startup",
+    "note": "P12-3: process.env read once at module level, outside any handler - must stay clean."
+  },
+  "benchmark/vulnerable/unscoped_environ_legacy.js": {
+    "expected": "finding",
+    "categories": ["Unscoped Environment Access"],
+    "pattern": "unscoped_environ_node_legacy_js",
+    "note": "P12-3: plain JavaScript and the legacy server.tool(...) call form with a function callback and process.env[...]."
+  },
+  "benchmark/vulnerable/hardcoded_api_key.ts": {
+    "expected": "finding",
+    "categories": ["Hardcoded Secret"],
+    "pattern": "hardcoded_secret_node",
+    "note": "P12-5a: simulated API key as a string literal in a TypeScript module."
+  },
+  "benchmark/clean/config_constants.ts": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "node_short_constant_and_env",
+    "note": "P12-5a: short constant under a secret-ish name and a secret read from the environment - must stay clean."
+  },
+  "benchmark/vulnerable/header_dump.ts": {
+    "expected": "finding",
+    "categories": ["Header Leak"],
+    "pattern": "header_leak_node",
+    "note": "P12-5a: request.headers embedded in an error message inside a catch block (TypeScript)."
+  },
+  "benchmark/clean/error_without_headers.ts": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "node_error_without_headers",
+    "note": "P12-5a: same try/catch shape but the error message contains no headers - must stay clean."
+  },
+  "benchmark/vulnerable/tool_description_injection.ts": {
+    "expected": "finding",
+    "categories": ["Tool Poisoning"],
+    "pattern": "tool_poisoning_node_description",
+    "note": "P12-5a: hidden instruction in the description of a registerTool config (TypeScript). Layer-2 review is not wired for TS - Layer 1 candidate only."
+  },
+  "benchmark/vulnerable/tool_output_injection.ts": {
+    "expected": "finding",
+    "categories": ["Tool Poisoning"],
+    "pattern": "tool_poisoning_node_output",
+    "note": "P12-5a: hidden instruction inside the text a registerTool callback returns (TypeScript)."
+  },
+  "benchmark/clean/handler_output_plain.ts": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "node_plain_description_and_output",
+    "note": "P12-5a: registerTool and legacy tool(...) with plain descriptions and plain returned text - must stay clean."
+  },
+  "benchmark/clean/example_server_handler_output.py": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "benign_handler_output",
+    "note": "P11-3: resource, tool and prompt handlers returning ordinary text (with logging). Must stay clean after the return-value rule is added."
+  },
+  "benchmark/vulnerable/manifest_hidden_tool_node/manifest.json": {
+    "expected": "finding",
+    "categories": ["Supply Chain"],
+    "pattern": "manifest_hidden_tool_node",
+    "note": "P12-5c: server.ts registers export_all_notes, but the node manifest only declares list_notes and add_note - a hidden tool."
+  },
+  "benchmark/vulnerable/manifest_hidden_tool_node/server.ts": {
+    "expected": "clean",
+    "categories": [],
+    "note": "P12-5c: the code itself is harmless for all other rules; only the manifest mismatch is the signal."
+  },
+  "benchmark/clean/manifest_matching_node/manifest.json": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "manifest_matches_code_node",
+    "note": "P12-5c: all three registered tools (registerTool and legacy tool form) are declared - must stay clean."
+  },
+  "benchmark/clean/manifest_matching_node/server.ts": {
+    "expected": "clean",
+    "categories": []
+  },
+  "benchmark/vulnerable/typosquat_server_name.ts": {
+    "expected": "finding",
+    "categories": ["Typosquatting / Shadow-Server"],
+    "pattern": "typosquat_near_miss_node",
+    "note": "P12-5e: new McpServer({ name: 'blender-msp' }) imitates the known 'blender-mcp'."
+  },
+  "benchmark/clean/typosquat_unrelated_name.ts": {
+    "expected": "clean",
+    "categories": [],
+    "pattern": "typosquat_unrelated_name_node",
+    "note": "P12-5e: new McpServer({ name: 'wetter-dienst' }) is unrelated to every known server - must stay clean."
+  }
+}

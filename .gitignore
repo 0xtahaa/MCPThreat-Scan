@@ -1,0 +1,65 @@
+# Secrets / local configuration
+.env
+.env.*
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tests / Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.semgrep_cache/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings (team settings stay tracked)
+.claude/settings.local.json
+
+# Benchmark raw output (reproducible)
+benchmark/batch_scan_results.jsonl
+
+# Internal project management and agent instructions (local only)
+STATUS.md
+TASKS.md
+CHANGELOG_SESSION.md
+PROJECT.md
+AGENT_SYSTEMPROMPT.md
+CLAUDE.md
+.claude/
+.obsidian/
+
+# Internal developer documentation
+docs/
+
+# Maintainer pipeline for real-world measurement (not published yet)
+benchmark/CAPTURE_TEMPLATE.md
+benchmark/discovery.py
+benchmark/batch_scan.py
+benchmark/sample_findings.py
+benchmark/estimate_precision.py
+benchmark/server_detection.py
+benchmark/discovered_repos.json
+benchmark/precision_sample.csv
+tests/test_discovery.py
+tests/test_batch_scan.py
+tests/test_sample_findings.py
+tests/test_estimate_precision.py
+tests/test_server_detection.py

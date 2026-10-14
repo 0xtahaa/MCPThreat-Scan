@@ -1,0 +1,31 @@
+# Header Leak for TypeScript/JavaScript (P12-5a): request headers (tokens, cookies) leaked into an
+# error message inside a catch block.
+# Known limit: only try/catch blocks; promise-style .catch(...) callbacks are not covered.
+
+rules:
+  - id: header-leak-node
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      Header Leak: Request headers are embedded in an error message (return/console/logger)
+      inside a catch block. This can leak sensitive headers
+      (Authorization, cookies, tokens) to the calling agent or into the log.
+      Do not include headers in error output, or
+      deliberately filter to non-sensitive headers.
+    metadata:
+      category: Header Leak
+      kind: security
+      references:
+        - benchmark/vulnerable/header_dump.ts
+        - benchmark/clean/error_without_headers.ts
+
+    patterns:
+      # Must be inside a try/catch block.
+      - pattern-inside: |
+          try { ... } catch ($EXC) { ... }
+
+      # Any of these ways of embedding headers in output.
+      - pattern-either:
+          - pattern: return <... $OBJ.headers ...>
+          - pattern: console.$FN(..., <... $OBJ.headers ...>, ...)
+          - pattern: $LOGGER.$FN(..., <... $OBJ.headers ...>, ...)

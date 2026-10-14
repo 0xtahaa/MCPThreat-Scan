@@ -1,0 +1,21 @@
+semgrep>=1.86.0
+pytest>=8.3.0
+
+# Supply chain OSV dependency check (uses an existing tool instead of a self-written OSV API client).
+pip-audit>=2.10.0
+
+# Layer-2 AI review (optional). Requires OPENAI_API_KEY in the environment.
+openai>=1.0.0
+
+# Loads OPENAI_API_KEY from a local .env file (see .gitignore), never from code/git.
+python-dotenv>=1.0.0
+
+# Interactive terminal UI (additional interface next to the CLI).
+textual>=8.2.0
+
+# ASCII art banner in the TUI main menu.
+pyfiglet>=1.0.4
+
+# TypeScript/JavaScript parsing for tool extraction. Parse only, never executes code.
+tree-sitter>=0.25.0
+tree-sitter-typescript>=0.23.2

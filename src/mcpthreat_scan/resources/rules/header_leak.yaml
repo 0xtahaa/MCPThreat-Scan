@@ -1,0 +1,32 @@
+# Header Leak: request headers (tokens, cookies) leaked into an error message inside an except block.
+
+rules:
+  - id: header-leak
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Header Leak: Request headers are embedded in an error message (return/print/log)
+      inside an except block. This can leak sensitive headers
+      (Authorization, cookies, tokens) to the calling agent or into the log.
+      Do not include headers in error output, or
+      deliberately filter to non-sensitive headers.
+    metadata:
+      category: Header Leak
+      kind: security
+      references:
+        - benchmark/vulnerable/header_dump.py
+
+    patterns:
+      # Must be inside a try/except block.
+      - pattern-inside: |
+          try:
+              ...
+          except ... as $EXC:
+              ...
+
+      # Any of these four ways of embedding headers in output.
+      - pattern-either:
+          - pattern: return <... $OBJ.headers ...>
+          - pattern: print(<... $OBJ.headers ...>)
+          - pattern: logging.$LOGFN(<... $OBJ.headers ...>)
+          - pattern: $LOGGER.$LOGFN(<... $OBJ.headers ...>)

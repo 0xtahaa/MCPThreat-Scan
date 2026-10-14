@@ -1,0 +1,49 @@
+# Unscoped Environment Access: os.environ/os.getenv reads inside a tool/resource/prompt handler instead of once at start-up.
+# Comments must stay outside "|" blocks - inside them they become part of the pattern text.
+
+rules:
+  - id: unscoped-environ
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Unscoped Environment Access: os.environ/os.getenv is read per call inside a
+      function marked as an MCP handler (tool/resource/prompt) instead of once at
+      server initialization. A process-wide secret is thereby pulled into every
+      request scope. Load the secret at startup instead and pass it on
+      scoped.
+    metadata:
+      category: Unscoped Environment Access
+      kind: security
+      references:
+        - benchmark/vulnerable/unscoped_environ.py
+
+    # Two branches cover the decorator written with or without parentheses.
+    # $DECO stands for the name after the dot in the decorator - we now allow
+    # "tool", "resource" OR "prompt" instead of only "tool". All three are invoked
+    # by the MCP client per-request, so the secret-leak risk is identical for all three.
+    pattern-either:
+      - patterns:
+          - pattern-inside: |
+              @$OBJ.$DECO(...)
+              def $FUNC(...):
+                  ...
+          - metavariable-regex:
+              metavariable: $DECO
+              regex: ^(tool|resource|prompt)$
+          - pattern-either:
+              - pattern: os.environ[$KEY]
+              - pattern: os.environ.get($KEY, ...)
+              - pattern: os.getenv($KEY, ...)
+
+      - patterns:
+          - pattern-inside: |
+              @$OBJ.$DECO
+              def $FUNC(...):
+                  ...
+          - metavariable-regex:
+              metavariable: $DECO
+              regex: ^(tool|resource|prompt)$
+          - pattern-either:
+              - pattern: os.environ[$KEY]
+              - pattern: os.environ.get($KEY, ...)
+              - pattern: os.getenv($KEY, ...)

@@ -1,0 +1,72 @@
+/* Polish (P14-6): spacing/borders for the consistently used widgets.
+   Colors themselves come from the registered theme (tui/theme.py), not from here. */
+
+#logo {
+    text-align: center;
+    padding: 1 0 0 0;
+    width: 100%;
+}
+
+#banner-info {
+    text-align: center;
+    color: $text-muted;
+    padding: 0 0 1 0;
+    width: 100%;
+}
+
+OptionList {
+    border: round $primary;
+    margin: 1 2;
+}
+
+DataTable {
+    margin: 1 2;
+}
+
+#findings-list {
+    margin: 1 2;
+    height: 1fr;
+    background: transparent;
+}
+
+.finding-card {
+    height: auto;
+    width: 1fr;
+    border: round $primary;
+    margin: 0 0 1 0;
+    padding: 0 1;
+}
+
+.finding-card.-highlight {
+    border: round $accent;
+}
+
+.finding-head {
+    text-style: bold;
+    padding: 0;
+}
+
+.finding-location {
+    color: $text-muted;
+    padding: 0;
+}
+
+.finding-message {
+    padding: 0;
+}
+
+#summary, #hint, #setup, #options {
+    padding: 1 2;
+}
+
+#summary {
+    text-style: bold;
+}
+
+Button {
+    margin: 0 2 1 2;
+}
+
+Input {
+    margin: 0 2 1 2;
+}

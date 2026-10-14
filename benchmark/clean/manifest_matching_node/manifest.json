@@ -1,0 +1,27 @@
+{
+  "manifest_version": "0.3",
+  "name": "example-notes-server-node",
+  "version": "1.0.0",
+  "description": "Fictional notes helper in TypeScript (benchmark fixture, never run).",
+  "author": {
+    "name": "Example Author"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server.js"
+  },
+  "tools": [
+    {
+      "name": "list_notes",
+      "description": "List saved notes."
+    },
+    {
+      "name": "add_note",
+      "description": "Add a short note."
+    },
+    {
+      "name": "export_all_notes",
+      "description": "Export all notes."
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+# Capability Mismatch (P11-1): a handler's name/docstring make no textual mention of a
+# risky capability family (network, email) that its body actually calls. Static heuristic
+# only, never a hard verdict - the orchestrator (analyzers/capability.py) applies a keyword filter
+# that turns this Semgrep candidate into a real finding only when name/docstring give no hint at all.
+#
+# KNOWN LIMIT (documented, not a bug): this only catches undisclosed/accidental scope
+# creep (docstring never updated after a side-effect was added). It is NOT a defense
+# against a deliberately deceptive docstring that mentions the right buzzword while
+# lying about the actual destination/purpose - that needs semantic judgment (Layer 2),
+# not keyword presence. See TASKS.md P11-1 for the planned Layer-2 follow-up.
+
+rules:
+  - id: capability-mismatch-network-candidate
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Capability Mismatch (candidate, NOT an automatic error): This function, marked as
+      an MCP handler (tool/resource/prompt), calls a network API
+      (requests/httpx/urllib). Additionally checked against the name/docstring by
+      keyword matching in the orchestrator (analyzers/capability.py).
+    metadata:
+      category: Capability Mismatch
+      kind: candidate-for-review
+      confidence: LOW
+      family: network
+
+    pattern-either:
+      - patterns:
+          - pattern-inside: |
+              @$OBJ.$DECO(...)
+              def $FUNC(...):
+                  ...
+          - metavariable-regex:
+              metavariable: $DECO
+              regex: ^(tool|resource|prompt)$
+          - pattern-either:
+              - pattern: requests.$METHOD(...)
+              - pattern: httpx.$METHOD(...)
+              - pattern: urllib.request.urlopen(...)
+      - patterns:
+          - pattern-inside: |
+              @$OBJ.$DECO
+              def $FUNC(...):
+                  ...
+          - metavariable-regex:
+              metavariable: $DECO
+              regex: ^(tool|resource|prompt)$
+          - pattern-either:
+              - pattern: requests.$METHOD(...)
+              - pattern: httpx.$METHOD(...)
+              - pattern: urllib.request.urlopen(...)
+
+  - id: capability-mismatch-email-candidate
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Capability Mismatch (candidate, NOT an automatic error): This function, marked as
+      an MCP handler (tool/resource/prompt), opens an SMTP connection (smtplib).
+      Additionally checked against the name/docstring by keyword matching in the
+      orchestrator (analyzers/capability.py).
+    metadata:
+      category: Capability Mismatch
+      kind: candidate-for-review
+      confidence: LOW
+      family: email
+
+    pattern-either:
+      - patterns:
+          - pattern-inside: |
+              @$OBJ.$DECO(...)
+              def $FUNC(...):
+                  ...
+          - metavariable-regex:
+              metavariable: $DECO
+              regex: ^(tool|resource|prompt)$
+          - pattern-either:
+              - pattern: smtplib.SMTP(...)
+              - pattern: smtplib.SMTP_SSL(...)
+      - patterns:
+          - pattern-inside: |
+              @$OBJ.$DECO
+              def $FUNC(...):
+                  ...
+          - metavariable-regex:
+              metavariable: $DECO
+              regex: ^(tool|resource|prompt)$
+          - pattern-either:
+              - pattern: smtplib.SMTP(...)
+              - pattern: smtplib.SMTP_SSL(...)

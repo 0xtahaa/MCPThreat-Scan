@@ -1,0 +1,23 @@
+{
+  "manifest_version": "0.3",
+  "name": "example-notes-server",
+  "version": "1.0.0",
+  "description": "Fictional notes helper (benchmark fixture, never run).",
+  "author": {
+    "name": "Example Author"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "server.py"
+  },
+  "tools": [
+    {
+      "name": "list_notes",
+      "description": "List saved notes."
+    },
+    {
+      "name": "add_note",
+      "description": "Add a short note."
+    }
+  ]
+}

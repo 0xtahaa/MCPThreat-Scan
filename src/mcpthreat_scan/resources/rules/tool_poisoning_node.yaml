@@ -1,0 +1,81 @@
+# Tool Poisoning for TypeScript/JavaScript (P12-5a): text that could hide an instruction aimed at an
+# AI agent, in (1) the description passed to a tool/resource/prompt registration and (2) the text a
+# handler callback returns. Keyword match only - always a review candidate, never a verdict.
+# Same signal words as the Python rules (tool_poisoning.yaml, tool_poisoning_output.yaml).
+#
+# The Layer-2 AI review (analyzers/ai_review.py) IS wired for these rule ids (orchestrator.py,
+# diff/ts_tool_schema.py re-extract the flagged text); without --ai-review a candidate stays a WARNING.
+#
+# Known limits: only descriptions/returns written as literal strings or
+# template literals are seen (not values built elsewhere and returned via a variable); harmless
+# texts with a signal word ("You must log in first") are candidates too.
+
+rules:
+  - id: tool-poisoning-description-node-candidate
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      Tool Poisoning (candidate, NOT an automatic error): The description of a registered
+      tool/resource/prompt contains a signal word that could indicate a hidden instruction to an
+      AI agent (e.g. "<system>" tag, "ignore previous instructions", "you must", hidden HTML
+      comment). Only a candidate for review, not standalone evidence of tool poisoning.
+    metadata:
+      category: Tool Poisoning
+      kind: candidate-for-review
+      confidence: LOW
+      references:
+        - benchmark/vulnerable/tool_description_injection.ts
+        - benchmark/clean/handler_output_plain.ts
+
+    patterns:
+      # Config-object form (registerTool) or legacy positional description string (tool).
+      - pattern-either:
+          - pattern: |
+              $SERVER.$REG($NAME, { ..., description: $D, ... }, ...)
+          - pattern: $SERVER.$REG($NAME, $D, ...)
+      - metavariable-regex:
+          metavariable: $REG
+          regex: ^(tool|registerTool|resource|registerResource|prompt|registerPrompt)$
+      # $D must be a string/template literal containing a signal word.
+      - metavariable-regex:
+          metavariable: $D
+          regex: (?is)^\s*["'`].*(<\s*system\s*>|ignore\s+(the\s+)?previous\s+instructions|you\s+must|<!--).*
+
+  - id: tool-poisoning-output-node-candidate
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      Tool Poisoning (candidate, NOT an automatic error): A tool/resource/prompt handler returns
+      text containing a signal word that could indicate a hidden instruction to an AI agent
+      (indirect prompt injection through content). Only a candidate for review, not standalone
+      evidence of tool poisoning.
+    metadata:
+      category: Tool Poisoning
+      kind: candidate-for-review
+      confidence: LOW
+      references:
+        - benchmark/vulnerable/tool_output_injection.ts
+        - benchmark/clean/handler_output_plain.ts
+
+    patterns:
+      # Only inside the callback of a registration call.
+      - pattern-either:
+          - pattern-inside: |
+              $SERVER.$REG(..., async (...) => { ... })
+          - pattern-inside: |
+              $SERVER.$REG(..., async (...) => $BODY)
+          - pattern-inside: |
+              $SERVER.$REG(..., async function (...) { ... })
+          - pattern-inside: |
+              $SERVER.$REG(..., function (...) { ... })
+          - pattern-inside: |
+              $SERVER.$REG(..., (...) => { ... })
+      - metavariable-regex:
+          metavariable: $REG
+          regex: ^(tool|registerTool|resource|registerResource|prompt|registerPrompt)$
+
+      # Any string/template literal inside a returned expression, e.g. content: [{ text: "..." }].
+      - pattern: return <... $X ...>
+      - metavariable-regex:
+          metavariable: $X
+          regex: (?is)^["'`].*(<\s*system\s*>|ignore\s+(the\s+)?previous\s+instructions|you\s+must|<!--).*

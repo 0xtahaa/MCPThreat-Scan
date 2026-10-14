@@ -1,0 +1,61 @@
+# Tool Poisoning via handler OUTPUT (P11-3): a string returned by an MCP tool/resource/prompt
+# handler that contains text which could be a hidden instruction aimed at the AI agent reading
+# the result (indirect prompt injection through content, not through the tool description).
+# Keyword match only - always a review candidate, never a verdict on its own (Layer-2 AI review
+# in analyzers/ai_review.py makes that call). Same signal words as tool_poisoning.yaml.
+#
+# Known limits (deliberate, see P11-3 experiment):
+#   - Only strings written directly in the source are visible. Text fetched at runtime (web page,
+#     file, database) cannot be seen by a static scanner.
+#   - Only `return "..."`, `return f"..."` and implicit/explicit concatenations that START with a
+#     string literal are matched. Dict/list/object returns and `msg = "..."; return msg` are NOT
+#     matched (variant A) - an attacker can evade the rule by moving the text into a variable.
+#   - Harmless messages with a signal word (e.g. "You must log in first.") are candidates too.
+#   - Also matches returns inside helper functions nested in a decorated handler.
+
+rules:
+  - id: tool-poisoning-output-candidate
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Tool Poisoning (candidate, NOT an automatic error): A tool/resource/prompt handler
+      returns text containing a signal word that could indicate a hidden instruction to an
+      AI agent (e.g. "<system>" tag, "ignore previous instructions", "you must", hidden HTML
+      comment). This hit is explicitly ONLY a candidate for a separate layer-2 review
+      (see P3-1) - not standalone evidence of tool poisoning.
+    metadata:
+      category: Tool Poisoning
+      kind: candidate-for-review
+      confidence: LOW
+      references:
+        - benchmark/vulnerable/resource_output_injection.py
+        - benchmark/clean/example_server_handler_output.py
+
+    patterns:
+      # Only inside a handler decorated with @x.tool / @x.resource / @x.prompt
+      # (with or without parentheses).
+      - pattern-either:
+          - pattern-inside: |
+              @$OBJ.$DECO(...)
+              def $FUNC(...):
+                  ...
+          - pattern-inside: |
+              @$OBJ.$DECO
+              def $FUNC(...):
+                  ...
+      - metavariable-regex:
+          metavariable: $DECO
+          regex: ^(tool|resource|prompt)$
+
+      - pattern: return $X
+
+      # Variant A: the returned expression must start with a string literal
+      # (optional "(" and prefix such as f/r before the quote).
+      - metavariable-regex:
+          metavariable: $X
+          regex: (?s)^\(?\s*[fFrRbBuU]{0,2}("|').*
+
+      # $X contains a phrase suggesting a hidden instruction to an AI agent.
+      - metavariable-regex:
+          metavariable: $X
+          regex: (?is).*(<\s*system\s*>|ignore\s+(the\s+)?previous\s+instructions|you\s+must|<!--).*

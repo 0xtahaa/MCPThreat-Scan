@@ -1,0 +1,41 @@
+# Command Injection: command injection via taint tracking - a function parameter flowing unsanitized
+# into a shell/eval/exec sink, possibly through several lines of string building.
+
+rules:
+  - id: command-injection
+    languages: [python]
+    severity: ERROR
+    mode: taint
+
+    message: >-
+      Command Injection: A function parameter flows unchecked into a shell command
+      or eval/exec. Enables command injection if the parameter is controlled by
+      an MCP client. Validate/whitelist the input
+      or execute without shell interpretation (e.g. subprocess with an
+      argument list instead of a concatenated string).
+    metadata:
+      category: Command Injection
+      kind: security
+      references:
+        - benchmark/vulnerable/command_injection.py
+
+    # Source: any function parameter, since that's what an MCP client controls.
+    pattern-sources:
+      - patterns:
+          - pattern-inside: |
+              def $FUNC(..., $PARAM, ...):
+                  ...
+          - pattern: $PARAM
+
+    # Sanitizer: shlex.quote() clears the taint.
+    pattern-sanitizers:
+      - pattern: shlex.quote(...)
+
+    # Sinks: shell execution or dynamic code execution.
+    pattern-sinks:
+      - pattern: os.system(...)
+      - pattern: eval(...)
+      - pattern: exec(...)
+      - pattern: subprocess.call(..., shell=True, ...)
+      - pattern: subprocess.run(..., shell=True, ...)
+      - pattern: subprocess.Popen(..., shell=True, ...)

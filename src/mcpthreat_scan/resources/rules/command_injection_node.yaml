@@ -1,0 +1,60 @@
+# Command Injection for TypeScript/JavaScript MCP servers (P12-2): a handler parameter flowing
+# unsanitized into a shell command. Handlers are the callbacks passed to the TS SDK registration
+# calls (server.registerTool(...) / server.tool(...) and the resource/prompt variants).
+#
+# Known limits: only the official SDK call shape is recognized; the low-level
+# server.setRequestHandler(CallToolRequestSchema, ...) form, eval/new Function and
+# execFile/spawn WITHOUT shell: true are not sinks; taint through helper functions defined
+# outside the callback is not followed.
+
+rules:
+  - id: command-injection-node
+    languages: [javascript, typescript]
+    severity: ERROR
+    mode: taint
+
+    message: >-
+      Command Injection: A handler parameter flows unchecked into a shell command
+      (child_process.exec/execSync or spawn/spawnSync with shell: true). Enables command
+      injection if the parameter is controlled by an MCP client. Use execFile or spawn with an
+      argument list instead of a concatenated command string.
+    metadata:
+      category: Command Injection
+      kind: security
+      references:
+        - benchmark/vulnerable/command_injection.ts
+        - benchmark/clean/command_execution.ts
+
+    # Source: any parameter of the callback registered as tool/resource/prompt handler.
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  $SERVER.$REG(..., async ({ ..., $PARAM, ... }) => { ... })
+              - pattern-inside: |
+                  $SERVER.$REG(..., async ({ ..., $PARAM, ... }) => $BODY)
+              - pattern-inside: |
+                  $SERVER.$REG(..., async ($PARAM, ...) => { ... })
+              - pattern-inside: |
+                  $SERVER.$REG(..., async function ($PARAM, ...) { ... })
+              - pattern-inside: |
+                  $SERVER.$REG(..., function ($PARAM, ...) { ... })
+              - pattern-inside: |
+                  $SERVER.$REG(..., ($PARAM, ...) => { ... })
+              - pattern-inside: |
+                  $SERVER.$REG(..., ({ ..., $PARAM, ... }) => { ... })
+          - metavariable-regex:
+              metavariable: $REG
+              regex: ^(tool|registerTool|resource|registerResource|prompt|registerPrompt)$
+          - pattern: $PARAM
+
+    # Sinks: shell execution.
+    pattern-sinks:
+      - pattern: exec(...)
+      - pattern: execSync(...)
+      - pattern: $CP.exec(...)
+      - pattern: $CP.execSync(...)
+      - pattern: |
+          spawn(..., { ..., shell: true, ... })
+      - pattern: |
+          spawnSync(..., { ..., shell: true, ... })

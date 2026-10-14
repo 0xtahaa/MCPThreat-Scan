@@ -1,0 +1,39 @@
+# Unscoped Environment Access for TypeScript/JavaScript MCP servers (P12-3): process.env read
+# inside a tool/resource/prompt handler callback instead of once at start-up.
+# Known limit: only the official SDK registration call shape is recognized (see command_injection_node.yaml).
+
+rules:
+  - id: unscoped-environ-node
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      Unscoped Environment Access: process.env is read per call inside a callback registered
+      as an MCP handler (tool/resource/prompt) instead of once at server initialization. A
+      process-wide secret is thereby pulled into every request scope. Load the secret at
+      startup instead and pass it on scoped.
+    metadata:
+      category: Unscoped Environment Access
+      kind: security
+      references:
+        - benchmark/vulnerable/unscoped_environ.ts
+        - benchmark/vulnerable/unscoped_environ_legacy.js
+        - benchmark/clean/env_at_startup.ts
+
+    patterns:
+      - pattern-either:
+          - pattern-inside: |
+              $SERVER.$REG(..., async (...) => { ... })
+          - pattern-inside: |
+              $SERVER.$REG(..., async (...) => $BODY)
+          - pattern-inside: |
+              $SERVER.$REG(..., async function (...) { ... })
+          - pattern-inside: |
+              $SERVER.$REG(..., function (...) { ... })
+          - pattern-inside: |
+              $SERVER.$REG(..., (...) => { ... })
+      - metavariable-regex:
+          metavariable: $REG
+          regex: ^(tool|registerTool|resource|registerResource|prompt|registerPrompt)$
+      - pattern-either:
+          - pattern: process.env.$KEY
+          - pattern: process.env[$KEY]

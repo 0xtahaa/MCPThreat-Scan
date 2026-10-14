@@ -1,0 +1,1 @@
+"""MCPThreat-Scan package."""

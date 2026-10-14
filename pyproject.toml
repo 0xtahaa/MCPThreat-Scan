@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcpthreat-scan"
+version = "0.1.0"
+description = "Static zero-execution security scanner for MCP server source code"
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# Textual stylesheet of the TUI; loaded via CSS_PATH relative to the app class (Phase 11, AR-146).
+# Semgrep rules and the curated known-servers list are read relative to the analyzer modules
+# (Phase 12, AR-152/AR-154).
+mcpthreat_scan = [
+    "tui/app.tcss",
+    "resources/known_mcp_servers.json",
+    "resources/rules/*.yaml",
+]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

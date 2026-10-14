@@ -1,0 +1,56 @@
+# Missing Audit Logging: an MCP tool/resource/prompt function with no logging call anywhere
+# inside it. Recommendation only (INFO), not a security bug by itself.
+
+rules:
+  - id: missing-audit
+    languages: [python]
+    severity: INFO
+    message: >-
+      Missing Audit Logging (recommendation, not a hard error): This function, marked as
+      an MCP handler (tool/resource/prompt), contains no recognizable logging call
+      (logging.* / logger.*). Security-relevant calls should be auditable
+      (who called which handler with which parameters, and when).
+    metadata:
+      category: Missing Audit Logging
+      kind: recommendation
+      confidence: LOW
+
+    # Two branches cover the decorator written with or without parentheses.
+    # $DECO stands for the name after the dot in the decorator - we now allow
+    # "tool", "resource" OR "prompt" instead of only "tool".
+    pattern-either:
+      - patterns:
+          - pattern: |
+              @$OBJ.$DECO(...)
+              def $FUNC(...):
+                  ...
+          - metavariable-regex:
+              metavariable: $DECO
+              regex: ^(tool|resource|prompt)$
+          - pattern-not: |
+              @$OBJ.$DECO(...)
+              def $FUNC(...):
+                  ...
+                  logging.$LOGFN(...)
+                  ...
+          # BUGFIX: was "pattern-not: $LOGGER.$LOGFN(...)" - $LOGGER/$LOGFN are unconstrained
+          # metavariables, so that matched ANY obj.method(...) call (e.g. requests.post(...)),
+          # silently suppressing this rule whenever the body made any method call at all.
+          # Restricting to actual logging method names fixes the false negative.
+          - pattern-not-regex: \.(debug|info|warning|warn|error|critical|exception|log)\(
+
+      - patterns:
+          - pattern: |
+              @$OBJ.$DECO
+              def $FUNC(...):
+                  ...
+          - metavariable-regex:
+              metavariable: $DECO
+              regex: ^(tool|resource|prompt)$
+          - pattern-not: |
+              @$OBJ.$DECO
+              def $FUNC(...):
+                  ...
+                  logging.$LOGFN(...)
+                  ...
+          - pattern-not-regex: \.(debug|info|warning|warn|error|critical|exception|log)\(
