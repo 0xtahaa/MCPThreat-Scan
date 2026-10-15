@@ -79,10 +79,12 @@ class MainMenuScreen(Screen):
             yield Static(render_wordmark(), id="wordmark")
             yield Static(render_header(), id="app-header")
         with VerticalScroll(id="menu-body"):
-            yield Static("WORKSPACE", classes="section-title")
-            yield Static(id="workspace")
-            yield Static("ACTIONS", classes="section-title")
-            yield OptionList(*(Option(label, id=key) for key, label in _MENU_ITEMS), id="main-menu")
+            workspace = Static(id="workspace")
+            workspace.border_title = "WORKSPACE"
+            yield workspace
+            menu = OptionList(*(Option(label, id=key) for key, label in _MENU_ITEMS), id="main-menu")
+            menu.border_title = "ACTIONS"
+            yield menu
         yield Static(SHORTCUTS_LINE, id="shortcuts")
 
     def on_mount(self) -> None:

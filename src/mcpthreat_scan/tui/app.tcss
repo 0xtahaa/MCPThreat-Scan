@@ -42,19 +42,28 @@
 
 #workspace {
     height: auto;
-    margin: 0 0 1 0;
-    padding: 0 0 0 1;
-    border-left: solid $border;
+    margin: 1 0 0 0;
+    padding: 0 1;
+    border: round $border;
+    border-title-color: $text-muted;
+    border-title-style: bold;
     text-wrap: nowrap;
     text-overflow: ellipsis;
 }
 
 #main-menu {
     height: auto;
-    margin: 0;
+    margin: 1 0 0 0;
     padding: 0;
-    border: none;
+    border: round $border;
+    border-title-color: $text-muted;
+    border-title-style: bold;
     background: transparent;
+}
+
+#main-menu:focus {
+    border: round $accent;
+    border-title-color: $accent;
 }
 
 #main-menu > .option-list--option {

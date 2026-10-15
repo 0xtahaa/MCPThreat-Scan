@@ -60,6 +60,26 @@ def test_main_menu_shows_mark_and_ascii_wordmark_in_a_wide_terminal(monkeypatch,
     asyncio.run(_run())
 
 
+def test_main_menu_sections_are_framed_boxes_with_titles(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
+
+    async def _run():
+        app = MCPScannerApp()
+        async with app.run_test(size=(100, 36)) as pilot:
+            await pilot.pause()
+            screen = app.screen
+            workspace, menu = screen.query_one("#workspace"), screen.query_one("#main-menu")
+
+            assert workspace.border_title == "WORKSPACE" and menu.border_title == "ACTIONS"
+            for box in (workspace, menu):
+                assert box.styles.border_top[0] == "round"
+            assert menu.has_focus
+            assert workspace.region.bottom < menu.region.y  # two separate boxes, one above the other
+
+    asyncio.run(_run())
+
+
 def test_main_menu_falls_back_to_the_compact_header_in_a_narrow_terminal(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
