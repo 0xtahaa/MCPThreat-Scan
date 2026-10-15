@@ -111,6 +111,19 @@ def test_product_never_imports_benchmark():
     assert bad == []
 
 
+# importlib.metadata only reads installed-package metadata (version lookup) and loads no code;
+# every other importlib module (import_module, util, machinery, ...) stays forbidden.
+ALLOWED_IMPORTLIB = {"importlib.metadata"}
+
+
+def _importlib_violations(tree):
+    return [
+        module
+        for module in _imports(tree)
+        if (module == "importlib" or module.startswith("importlib.")) and module not in ALLOWED_IMPORTLIB
+    ]
+
+
 def test_no_dynamic_code_execution_in_product_code():
     # Zero-Execution: no eval/exec/__import__/importlib on scan targets anywhere in the package
     bad = []
@@ -120,11 +133,21 @@ def test_no_dynamic_code_execution_in_product_code():
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 if node.func.id in {"eval", "exec", "__import__"}:
                     bad.append(f"{path.relative_to(ROOT)}: {node.func.id}(")
-        for module in _imports(tree):
-            if module == "importlib" or module.startswith("importlib."):
-                bad.append(f"{path.relative_to(ROOT)} imports {module}")
+        bad += [f"{path.relative_to(ROOT)} imports {module}" for module in _importlib_violations(tree)]
 
     assert bad == []
+
+
+def test_importlib_guard_allows_only_the_metadata_module():
+    tree = ast.parse(
+        "import importlib\n"
+        "import importlib.util\n"
+        "from importlib import import_module\n"
+        "from importlib.metadata import version\n"
+        "import importlib.metadata\n"
+    )
+
+    assert sorted(_importlib_violations(tree)) == ["importlib", "importlib.util"]
 
 
 # Phase 8 (AR-105 to AR-108): no models, no class hierarchies, analyzers stay functions.
@@ -302,7 +325,7 @@ def test_cli_guard_detects_analyzer_policy_diff_and_legacy_imports():
 
 
 # Phase 11 (AR-135, AR-136): the target TUI presents and navigates; analysis, store formats and
-# legacy paths stay out. Direct file writes are allowed in setup.py only (.env key storage).
+# legacy paths stay out. Direct file writes are allowed in setup.py (.env key storage) and export.py (report export) only.
 TUI_FORBIDDEN_IMPORTS = {
     f"{PKG}.analyzers", f"{PKG}.diff", f"{PKG}.cli", f"{PKG}.core.config",
     "scanner", "tui", "cli", "benchmark", "subprocess", "json", "socket", "urllib", "http", "requests", "openai",
@@ -323,7 +346,11 @@ def test_target_tui_imports_no_analysis_diff_cli_legacy_or_store_format_modules(
 
 
 def test_target_tui_uses_only_the_core_api_and_policy_functions():
-    allowed = {f"{PKG}.core.orchestrator", f"{PKG}.core.exceptions", f"{PKG}.policy.ignore", f"{PKG}.policy.reputation"}
+    allowed = {
+        f"{PKG}.core.orchestrator", f"{PKG}.core.exceptions", f"{PKG}.core.models",
+        f"{PKG}.policy.ignore", f"{PKG}.policy.reputation",
+        f"{PKG}.reporting.json", f"{PKG}.reporting.sarif",  # export dialog: same renderers as the CLI
+    }
     used = set()
     for path, tree in _modules("tui"):
         used |= {m for m in _imports(tree) if m.startswith(f"{PKG}.") and not _matches(m, {f"{PKG}.tui"})}
@@ -334,7 +361,7 @@ def test_target_tui_uses_only_the_core_api_and_policy_functions():
 def test_target_tui_writes_no_files_except_the_env_key_in_setup():
     bad = []
     for path, tree in _modules("tui"):
-        if path.name == "setup.py":
+        if path.name in {"setup.py", "export.py"}:  # API-key file / the user's report export
             continue
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):

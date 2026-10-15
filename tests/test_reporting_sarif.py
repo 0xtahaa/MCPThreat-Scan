@@ -7,7 +7,7 @@ import os
 
 import pytest
 
-from mcpthreat_scan.core.models import VULNERABILITY_CATEGORIES
+from mcpthreat_scan.core.models import REMEDIATION_BY_CATEGORY, VULNERABILITY_CATEGORIES
 from mcpthreat_scan.reporting.sarif import render_sarif
 
 SUMMARY = {"categories_checked": 9, "categories_without_finding": 9, "categories_with_finding": []}
@@ -40,7 +40,12 @@ def test_rule_catalog_lists_all_nine_categories_even_without_findings():
     rules = _render()["runs"][0]["tool"]["driver"]["rules"]
 
     assert [rule["name"] for rule in rules] == VULNERABILITY_CATEGORIES
-    assert rules[0] == {"id": "header-leak", "name": "Header Leak", "shortDescription": {"text": "Header Leak"}}
+    assert rules[0] == {
+        "id": "header-leak",
+        "name": "Header Leak",
+        "shortDescription": {"text": "Header Leak"},
+        "help": {"text": REMEDIATION_BY_CATEGORY["Header Leak"]},
+    }
     assert rules[-1]["id"] == "typosquatting-/-shadow-server"
     assert _render()["runs"][0]["results"] == []
 
@@ -113,3 +118,23 @@ def test_render_sarif_does_not_mutate_the_report():
     render_sarif(report)
 
     assert repr(report) == before
+
+
+def test_evidence_becomes_the_region_snippet_and_the_scanner_rule_id_a_property():
+    finding = {**_finding(line=9), "rule_id": "header-dump-candidate", "evidence": "headers = request.headers"}
+
+    result = _render(finding)["runs"][0]["results"][0]
+
+    assert result["ruleId"] == "header-leak"  # stable category id is unchanged
+    assert result["properties"] == {"scannerRuleId": "header-dump-candidate"}
+    assert result["locations"][0]["physicalLocation"]["region"] == {
+        "startLine": 9,
+        "snippet": {"text": "headers = request.headers"},
+    }
+
+
+def test_findings_without_the_new_fields_still_render():
+    result = _render(_finding(line=9))["runs"][0]["results"][0]
+
+    assert "properties" not in result
+    assert "snippet" not in result["locations"][0]["physicalLocation"]["region"]

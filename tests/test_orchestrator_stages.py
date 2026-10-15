@@ -375,9 +375,10 @@ def test_diff_stage_converts_every_change_type(monkeypatch, raw, severity, messa
 
     rows = orchestrator._run_diff_stage(Path("old.py"), Path("new.py"))
 
+    rule_id = "rugpull-" + raw["change"].replace("_", "-")
     assert rows == [{"category": "Tool Poisoning", "file": "new.py", "line": None,
-                     "severity": severity, "message": message}]
-    assert list(rows[0]) == ["category", "file", "line", "severity", "message"]
+                     "severity": severity, "message": message, "rule_id": rule_id}]
+    assert list(rows[0]) == ["category", "file", "line", "severity", "message", "rule_id"]
 
 
 def test_diff_stage_without_changes_returns_no_rows(monkeypatch):

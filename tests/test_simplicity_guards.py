@@ -17,14 +17,18 @@ EXPECTED_CLASSES = {
     "analyzers/semgrep.py": {"SemgrepRunnerError": "RuntimeError"},
     "core/exceptions.py": {"ReportError": "RuntimeError"},
     "tui/app.py": {"MCPScannerApp": "App"},
+    "tui/screens/comparison.py": {"ComparisonScreen": "Screen"},
+    "tui/screens/confirm.py": {"ConfirmScreen": "ModalScreen"},
     "tui/screens/diff_wizard.py": {"DiffPathScreen": "Screen"},
-    "tui/screens/ignore_manager.py": {"IgnoreManagerScreen": "Screen"},
+    "tui/screens/export.py": {"ExportScreen": "ModalScreen"},
     "tui/screens/main_menu.py": {"MainMenuScreen": "Screen"},
-    "tui/screens/reputation_manager.py": {"ReputationManagerScreen": "Screen"},
     "tui/screens/results.py": {"FindingItem": "ListItem", "ResultsScreen": "Screen"},
     "tui/screens/running.py": {"RunningScreen": "Screen"},
     "tui/screens/scan_wizard.py": {"ScanPathScreen": "Screen", "ScanOptionsScreen": "Screen"},
+    "tui/screens/settings.py": {"SettingsScreen": "Screen"},
     "tui/screens/setup.py": {"SetupScreen": "Screen"},
+    "tui/screens/summary.py": {"ScanSummaryScreen": "Screen"},
+    "tui/screens/trust.py": {"IgnoreRuleScreen": "ModalScreen", "TrustScreen": "Screen"},
 }
 FORBIDDEN_CLASS_NAME = re.compile(r"(Factory|Service|Provider|Registry|Strategy|Abstract|Base|Builder|Singleton)$")
 ABSTRACTION_MODULES = {"abc", "typing_extensions"}
@@ -61,7 +65,7 @@ def test_classes_outside_the_tui_are_only_flat_exceptions():
 def test_tui_classes_only_extend_textual_framework_types():
     inside = {name: base for path, classes in _classes().items() if path.startswith("tui/") for name, base in classes.items()}
 
-    assert set(inside.values()) == {"App", "Screen", "ListItem"}
+    assert set(inside.values()) == {"App", "Screen", "ModalScreen", "ListItem"}
 
 
 def test_no_factory_service_or_similar_pattern_class_names():
@@ -71,7 +75,7 @@ def test_no_factory_service_or_similar_pattern_class_names():
 
 
 def test_manager_in_a_class_name_is_only_allowed_for_a_screen():
-    # IgnoreManagerScreen and ReputationManagerScreen are UI screens (feature names), not manager objects
+    # (no class name contains "Manager" any more; the guard stays for future screens)
     offenders = [
         name
         for classes in _classes().values()

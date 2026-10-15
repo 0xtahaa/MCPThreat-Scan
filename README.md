@@ -124,6 +124,19 @@ exit code 1 as soon as a finding is at least that severe (without the flag the e
 python -m mcpthreat_scan.cli.main tui
 ```
 
+The TUI (Autorea look: dark, restrained green) offers: **Start New Scan** (select and validate a
+target, confirm, watch the phases, read the summary), **Compare Versions** (two files or two folders:
+changed files, tool-definition changes, new and resolved findings), **View Findings** (severity
+filter, detail panel with rule, evidence and recommendation), **Trusted Servers & Exclusions**
+(trusted servers and ignore rules with scope and source; remove/revoke asks first) and
+**Settings & Help**. Reports can be exported as JSON or SARIF with `E` (same renderers as
+`--format json|sarif`). Shortcuts are shown on each screen; on the main menu: `S` scan, `D` compare,
+`?` help, `Q` quit. Screenshots: `docs/tui/`. A running scan cannot be cancelled safely (Semgrep runs
+as one external process).
+
+Each finding in JSON and SARIF output now also carries `rule_id` and `evidence` (the flagged source
+line or description; never set for hardcoded secrets).
+
 ## Project structure
 
 ```

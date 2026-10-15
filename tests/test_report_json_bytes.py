@@ -8,7 +8,7 @@ from mcpthreat_scan.core.orchestrator import run_diff, run_scan
 from mcpthreat_scan.reporting.json import render_json
 
 TOP_KEYS = ["target", "findings", "summary"]
-FINDING_KEYS = ["category", "file", "line", "severity", "message"]
+FINDING_KEYS = ["category", "file", "line", "severity", "message", "rule_id", "evidence"]
 SUMMARY_KEYS = ["categories_checked", "categories_without_finding", "categories_with_finding"]
 SCAN_FILE = "benchmark/vulnerable/command_injection.py"
 

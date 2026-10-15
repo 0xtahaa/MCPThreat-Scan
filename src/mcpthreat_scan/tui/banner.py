@@ -1,30 +1,34 @@
-"""ASCII art banner for the TUI main menu - display name, not the project/folder name.
-
-Uses pyfiglet instead of hand-drawn block letters (terminals have no font size -
-"large" here means: letters composed of several characters).
-"""
+"""Compact header text of the TUI: brand, product, tagline, version and status."""
 
 from __future__ import annotations
 
-import pyfiglet
+from importlib.metadata import PackageNotFoundError, version
 
-DISPLAY_NAME = "MCPThreat-Scan"
-COMPANY = "Autorea"
-VERSION = "v0.1.0"
-TAGLINE = "Zero-Execution Static Analysis for MCP Server Source Code"
+from rich.text import Text
+
+from mcpthreat_scan.tui.theme import ACCENT, TEXT_MUTED, TEXT_SECONDARY
+
+BRAND = "AUTOREA"
+PRODUCT = "MCP THREAT SCAN"
+TAGLINE = "Zero-Execution Static Analysis"
 REPO_URL = "https://github.com/0xtahaa/MCP-scanner-"
 
 
-def render_ascii_logo() -> str:
-    """Build the ASCII lettering of the display name (font "small" - fits into 80 columns)."""
-    return pyfiglet.figlet_format(DISPLAY_NAME, font="small")
+def get_version() -> str:
+    """Installed package version (single source: pyproject.toml); "unknown" if not installed."""
+    try:
+        return f"v{version('mcpthreat-scan')}"
+    except PackageNotFoundError:
+        return "unknown"
 
 
-def render_info_line() -> str:
-    """Build the line with company/version/tagline plus the link below it.
-
-    Separator is deliberately ASCII ("|") instead of a Unicode middle dot - on some
-    Windows console code pages a Unicode special character was rendered incorrectly here
-    (same class of problem as the documented umlaut bug from P8-4).
-    """
-    return f"{COMPANY} | {VERSION} | {TAGLINE}\n{REPO_URL}"
+def render_header(status: str = "READY") -> Text:
+    """Three lines: brand / product, tagline, version and status."""
+    text = Text()
+    text.append(BRAND, style=f"bold {ACCENT}")
+    text.append(" / ", style=TEXT_MUTED)
+    text.append(PRODUCT, style="bold")
+    text.append(f"\n{TAGLINE}", style=TEXT_SECONDARY)
+    text.append(f"\nVersion: {get_version()}  ·  Status: ", style=TEXT_MUTED)
+    text.append(status, style=f"bold {ACCENT}")
+    return text

@@ -109,11 +109,15 @@ EXPECTED_PACKAGE_EDGES = {
     "cli": ["core", "reporting", "tui"],
     "core": ["analyzers", "diff", "policy"],
     "reporting": ["core"],
-    "tui": ["core", "policy"],
+    "tui": ["core", "policy", "reporting"],
 }
 EXPECTED_LAZY_EDGES = {
     f"{PKG}.cli.main": {f"{PKG}.tui.app"},
-    f"{PKG}.tui.screens.running": {f"{PKG}.tui.screens.results"},
+    f"{PKG}.tui.screens.running": {
+        f"{PKG}.tui.screens.comparison",
+        f"{PKG}.tui.screens.results",
+        f"{PKG}.tui.screens.summary",
+    },
 }
 
 

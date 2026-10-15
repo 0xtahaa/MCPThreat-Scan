@@ -1,58 +1,231 @@
-/* Polish (P14-6): spacing/borders for the consistently used widgets.
-   Colors themselves come from the registered theme (tui/theme.py), not from here. */
+/* Autorea look (restrained green on dark). Colors come from the registered theme in
+   tui/theme.py, never hard-coded here; this file only sets spacing, borders and layout. */
 
-#logo {
-    text-align: center;
-    padding: 1 0 0 0;
+/* ---------- main menu ---------- */
+
+#menu-body {
     width: 100%;
+    max-width: 100;
+    height: 1fr;
+    padding: 1 3;
 }
 
-#banner-info {
-    text-align: center;
+#app-header {
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+.section-title {
     color: $text-muted;
-    padding: 0 0 1 0;
-    width: 100%;
+    text-style: bold;
+    margin: 1 0 0 0;
+}
+
+#workspace {
+    height: auto;
+    margin: 0 0 1 0;
+    padding: 0 0 0 1;
+    border-left: solid $border;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+}
+
+#main-menu {
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+#main-menu > .option-list--option {
+    padding: 0 1;
+}
+
+#main-menu > .option-list--option-disabled {
+    color: $text-muted;
+}
+
+#shortcuts {
+    dock: bottom;
+    height: 1;
+    padding: 0 3;
+    background: $surface;
+    color: $text-muted;
+}
+
+/* ---------- shared widgets ---------- */
+
+Header {
+    background: $surface;
+    color: $foreground;
+}
+
+Footer {
+    background: $surface;
 }
 
 OptionList {
-    border: round $primary;
+    border: round $border;
     margin: 1 2;
+}
+
+OptionList:focus {
+    border: round $accent;
 }
 
 DataTable {
     margin: 1 2;
 }
 
-#findings-list {
-    margin: 1 2;
-    height: 1fr;
-    background: transparent;
+/* ---------- findings: list on top, detail panel below ---------- */
+
+#filter-bar {
+    height: 1;
+    padding: 0 2;
+    margin: 1 0 0 0;
 }
 
-.finding-card {
-    height: auto;
-    width: 1fr;
-    border: round $primary;
-    margin: 0 0 1 0;
+#findings-list {
+    margin: 1 2 0 2;
+    height: 1fr;
+    min-height: 4;
+    background: transparent;
+    border-top: solid $border;
+}
+
+.finding-row {
+    height: 1;
     padding: 0 1;
 }
 
-.finding-card.-highlight {
-    border: round $accent;
+.finding-row Static {
+    width: 100%;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
 }
 
-.finding-head {
+#finding-detail {
+    height: auto;
+    max-height: 55%;
+    margin: 0 2 1 2;
+    padding: 1 2;
+    border-top: solid $border;
+    background: $surface;
+}
+
+#detail {
+    height: auto;
+}
+
+/* ---------- wizard steps, summary, comparison, trust, settings ---------- */
+
+.step-title {
+    padding: 1 2 0 2;
+    color: $accent;
     text-style: bold;
-    padding: 0;
 }
 
-.finding-location {
+#path-status {
+    padding: 0 2;
     color: $text-muted;
-    padding: 0;
 }
 
-.finding-message {
-    padding: 0;
+#target-details {
+    margin: 0 0 1 0;
+    padding: 0 0 0 1;
+    border-left: solid $border;
+    height: auto;
+}
+
+#status, #progress, #cancel-note {
+    padding: 0 2;
+}
+
+#progress {
+    height: auto;
+    margin: 1 0;
+}
+
+#cancel-note {
+    color: $text-muted;
+}
+
+LoadingIndicator {
+    height: 1;
+    margin: 1 2;
+    color: $accent;
+}
+
+#summary-body, #comparison-body, #settings-body, #trust-body {
+    height: 1fr;
+    padding: 1 2;
+}
+
+#summary-card, #comparison, #settings {
+    height: auto;
+    margin: 0 0 1 0;
+    padding: 0 0 0 1;
+    border-left: solid $border;
+}
+
+#summary-actions {
+    margin: 1 0;
+}
+
+#trust-note {
+    padding: 1 2;
+    color: $text-muted;
+}
+
+.section-source {
+    height: auto;
+    padding: 0 0 0 0;
+}
+
+#trusted-table, #exclusions-table {
+    margin: 0 0 1 0;
+    height: auto;
+    max-height: 12;
+}
+
+/* ---------- dialogs (confirm, export, exclusion form) ---------- */
+
+ConfirmScreen, ExportScreen, IgnoreRuleScreen {
+    align: center middle;
+}
+
+.dialog {
+    width: 70%;
+    max-width: 80;
+    min-width: 36;
+    height: auto;
+    padding: 1 2;
+    background: $surface;
+    border: round $border;
+}
+
+.dialog-title {
+    margin: 0 0 1 0;
+}
+
+.dialog-detail, .dialog-hint {
+    color: $text-muted;
+    margin: 0 0 1 0;
+}
+
+.dialog-buttons {
+    height: auto;
+    margin: 1 0 0 0;
+}
+
+.dialog Input, .dialog Select {
+    margin: 0 0 1 0;
+}
+
+.dialog OptionList {
+    margin: 0 0 1 0;
+    height: auto;
 }
 
 #summary, #hint, #setup, #options {
@@ -69,4 +242,9 @@ Button {
 
 Input {
     margin: 0 2 1 2;
+    border: tall $border;
+}
+
+Input:focus {
+    border: tall $accent;
 }
