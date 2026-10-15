@@ -7,14 +7,15 @@ import os
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import VerticalScroll
+from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import OptionList, Static
 from textual.widgets.option_list import Option
 
-from mcpthreat_scan.tui.banner import render_header
+from mcpthreat_scan.tui.banner import render_header, render_wordmark, wordmark_width
 from mcpthreat_scan.tui.screens.diff_wizard import open_diff_wizard
 from mcpthreat_scan.tui.display import shorten_left
+from mcpthreat_scan.tui.logo import render_logo
 from mcpthreat_scan.tui.screens.results import ResultsScreen
 from mcpthreat_scan.tui.screens.scan_wizard import ScanPathScreen
 from mcpthreat_scan.tui.screens.settings import SettingsScreen
@@ -35,6 +36,7 @@ SHORTCUTS_LINE = "↑↓ Navigate · Enter Select · S Scan · D Diff · ? Help 
 
 
 _LABEL_WIDTH = 10
+_MARK_WIDTH = 9  # the 8-column mark plus one column of space
 
 
 def _workspace_text(app: App, value_width: int = 0) -> Text:
@@ -72,8 +74,11 @@ class MainMenuScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(id="menu-body"):
+        with Horizontal(id="brand"):
+            yield Static(render_logo(), id="brand-mark")
+            yield Static(render_wordmark(), id="wordmark")
             yield Static(render_header(), id="app-header")
+        with VerticalScroll(id="menu-body"):
             yield Static("WORKSPACE", classes="section-title")
             yield Static(id="workspace")
             yield Static("ACTIONS", classes="section-title")
@@ -88,7 +93,19 @@ class MainMenuScreen(Screen):
         self._refresh()
 
     def on_resize(self) -> None:
+        self._layout_brand()
         self._refresh()
+
+    def _layout_brand(self) -> None:
+        """Pick the widest header that fits: mark + wordmark, wordmark alone, or mark + compact text."""
+        width = self.query_one("#brand").size.width
+        if not width:
+            return
+        with_mark = width >= _MARK_WIDTH + wordmark_width()
+        wordmark = width >= wordmark_width()
+        self.query_one("#brand-mark").display = with_mark or not wordmark
+        self.query_one("#wordmark").display = wordmark
+        self.query_one("#app-header").display = not wordmark
 
     def _refresh(self) -> None:
         workspace = self.query_one("#workspace", Static)

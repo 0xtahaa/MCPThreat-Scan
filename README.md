@@ -124,7 +124,7 @@ exit code 1 as soon as a finding is at least that severe (without the flag the e
 python -m mcpthreat_scan.cli.main tui
 ```
 
-The TUI (Autorea look: dark, restrained green) offers: **Start New Scan** (select and validate a
+The TUI (Autorea look: dark, restrained green, with the Autorea mark and the ASCII "MCPThreat-Scan" lettering at the top; narrow terminals get a compact header) offers: **Start New Scan** (select and validate a
 target, confirm, watch the phases, read the summary), **Compare Versions** (two files or two folders:
 changed files, tool-definition changes, new and resolved findings), **View Findings** (severity
 filter, detail panel with rule, evidence and recommendation), **Trusted Servers & Exclusions**

@@ -33,22 +33,68 @@ def _fake_report(findings=None):
     return {"target": "x", "findings": findings, "summary": dict(_EMPTY_SUMMARY)}
 
 
-def test_main_menu_shows_compact_autorea_header(monkeypatch, tmp_path):
+def test_main_menu_shows_mark_and_ascii_wordmark_in_a_wide_terminal(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
 
     async def _run():
         app = MCPScannerApp()
-        async with app.run_test() as pilot:
+        async with app.run_test(size=(110, 36)) as pilot:
             await pilot.pause()
-            header = str(app.screen.query_one("#app-header", Static).content)
+            screen = app.screen
+            wordmark = str(screen.query_one("#wordmark", Static).content)
+
+            assert len(wordmark.splitlines()) == 5  # four lines of lettering + info line, as high as the mark
+            assert "|_|  |_|" in wordmark  # the figlet "M" of MCPThreat-Scan
+            info = wordmark.splitlines()[-1]
+            assert "AUTOREA" in info and "Zero-Execution Static Analysis" in info
+            assert f"v{importlib.metadata.version('mcpthreat-scan')}" in info and "Status: READY" in info
+            assert screen.query_one("#wordmark").display and screen.query_one("#brand-mark").display
+            assert not screen.query_one("#app-header").display
+            mark = str(screen.query_one("#brand-mark", Static).content)
+            braille = {chr(code) for code in range(0x2800, 0x2900)}
+            assert len(mark.splitlines()) == 5 and set(mark.replace("\n", "")) <= braille
+            # nothing of the lettering is cut off
+            assert screen.query_one("#wordmark").size.width >= max(len(line) for line in wordmark.splitlines())
+
+    asyncio.run(_run())
+
+
+def test_main_menu_falls_back_to_the_compact_header_in_a_narrow_terminal(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
+
+    async def _run():
+        app = MCPScannerApp()
+        async with app.run_test(size=(60, 30)) as pilot:
+            await pilot.pause()
+            screen = app.screen
+            header = str(screen.query_one("#app-header", Static).content)
 
             assert "AUTOREA / MCP THREAT SCAN" in header
             assert "Zero-Execution Static Analysis" in header
             assert f"Version: v{importlib.metadata.version('mcpthreat-scan')}" in header
             assert "Status: READY" in header
-            assert len(header.splitlines()) == 3  # compact, no ASCII banner
-            assert not app.screen.query("#logo")
+            assert len(header.splitlines()) == 3
+            assert screen.query_one("#app-header").display and screen.query_one("#brand-mark").display
+            assert not screen.query_one("#wordmark").display
+
+    asyncio.run(_run())
+
+
+def test_main_menu_drops_only_the_mark_when_the_lettering_just_fits(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
+
+    async def _run():
+        app = MCPScannerApp()
+        async with app.run_test(size=(72, 30)) as pilot:
+            await pilot.pause()
+            screen = app.screen
+
+            assert screen.query_one("#wordmark").display
+            assert not screen.query_one("#brand-mark").display
+            assert not screen.query_one("#app-header").display
 
     asyncio.run(_run())
 
