@@ -80,6 +80,32 @@ def test_main_menu_sections_are_framed_boxes_with_titles(monkeypatch, tmp_path):
     asyncio.run(_run())
 
 
+def test_main_menu_highlight_follows_the_mouse_but_skips_disabled_entries(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
+
+    async def _run():
+        app = MCPScannerApp()
+        async with app.run_test(size=(100, 36)) as pilot:
+            await pilot.pause()
+            menu = app.screen.query_one("#main-menu")
+            assert menu.highlighted == 0
+
+            await pilot.hover("#main-menu", offset=(4, 1 + 5))  # "Quit" (row 5, below the top border)
+            await pilot.pause()
+            assert menu.highlighted == 5
+
+            await pilot.hover("#main-menu", offset=(4, 1 + 2))  # "View Findings": disabled before a first scan
+            await pilot.pause()
+            assert menu.highlighted == 5
+
+            await pilot.hover("#main-menu", offset=(4, 1 + 1))  # "Compare Versions (Diff)"
+            await pilot.pause()
+            assert menu.highlighted == 1
+
+    asyncio.run(_run())
+
+
 def test_main_menu_falls_back_to_the_compact_header_in_a_narrow_terminal(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 
 from rich.text import Text
+from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
@@ -117,6 +118,13 @@ class MainMenuScreen(Screen):
             menu.disable_option("findings")
         else:
             menu.enable_option("findings")
+
+    def on_mouse_move(self, event: events.MouseMove) -> None:
+        """The green bar follows the mouse like it follows the arrow keys."""
+        index = event.style.meta.get("option")
+        menu = self.query_one(OptionList)
+        if index is not None and menu.highlighted != index and not menu.get_option_at_index(index).disabled:
+            menu.highlighted = index
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         self._open(event.option_id)
