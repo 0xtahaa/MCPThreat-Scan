@@ -1,5 +1,4 @@
 semgrep>=1.86.0
-pytest>=8.3.0
 
 # Supply chain OSV dependency check (uses an existing tool instead of a self-written OSV API client).
 pip-audit>=2.10.0

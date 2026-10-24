@@ -1,33 +1,256 @@
 # MCPThreat-Scan
 
-Static **zero-execution** security scanner for MCP server source code (Python). The scanned
-code is never executed — it is only read as text/AST and analyzed with Semgrep rules plus a
-hardened, optional AI review (layer 2).
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
 
-MCP servers connect AI agents to real access (email, databases, APIs). According to an
-independent study, existing scanners have a false-positive rate of about 78 %. The goal of
-this project: demonstrably higher accuracy, measured against its own open benchmark.
+**Check MCP servers for security flaws before you trust them — without ever running them.**
 
-## Covered OWASP MCP categories (deliberately not all 10)
+MCPThreat-Scan reads the source code of an MCP server (Python, TypeScript or JavaScript)
+and reports risks such as hardcoded secrets, command injection and poisoned tool
+descriptions. It is made for anyone who connects AI agents to third-party MCP servers
+(individuals, developers and teams) and wants to know what a server can do before giving it
+access to their data and tools. Because the scanned code is never executed, it is safe to
+scan servers you do not trust yet. If you build MCP servers yourself, use it to check your
+own code before a release.
+
+## Example
+
+```text
+$ mcpthreat-scan scan benchmark/vulnerable/command_injection.py
+
+benchmark\vulnerable\command_injection.py:
+  Line 9 [Command Injection] ERROR: Command Injection: A function parameter flows unchecked
+  into a shell command or eval/exec. ...
+
+Summary: 8 of 9 OWASP MCP categories without findings.
+Categories with findings: Command Injection
+```
+
+Every finding shows the file, line, category, severity and a hint on how to fix it.
+
+## Features
+
+- **Zero-execution:** the code is only read and parsed, never run, so it is safe to scan
+  servers you do not trust yet
+- **9 OWASP MCP risk categories:** from hardcoded secrets and command injection to tool
+  poisoning and typosquatting
+- **Rug-pull detection:** compare two versions of a server and see changed tools, parameters
+  and descriptions (`diff`)
+- **Optional AI review** of tool-poisoning candidates (opt-in with `--ai-review`)
+- **CI-ready:** text, JSON and SARIF output, and `--fail-on` to fail a build by severity
+- **Interactive terminal UI** (`tui`)
+- **Open benchmark** with known test cases, so you can check how the rules perform
+
+## Quick start
+
+Requires Python 3.12+ and Git.
+
+```bash
+git clone https://github.com/0xtahaa/MCPThreat-Scan.git
+cd MCPThreat-Scan
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -e .
+```
+
+The commands below assume the virtual environment is active.
+
+**Interactive interface (recommended to start):**
+
+```bash
+mcpthreat-scan tui
+```
+
+It guides you through choosing a target, running the scan and reading the findings.
+
+**Command line:** scan a single file or a whole folder:
+
+```bash
+mcpthreat-scan scan path/to/mcp_server.py
+```
+
+Optional: for the AI review (`--ai-review`), store an `OPENAI_API_KEY` in a local `.env`
+file. It is never committed (see `.gitignore`).
+
+### Set up with an AI assistant
+
+Copy this prompt into Claude Code, Codex or a similar agent. It only installs the tool.
+
+```text
+Set up MCPThreat-Scan for me. Only do the setup, do not scan anything.
+
+1. Check that Python 3.12+ and Git are installed. If not, tell me how to install them.
+2. Clone https://github.com/0xtahaa/MCPThreat-Scan.git, create a virtual environment
+   and run `pip install -e .`.
+3. Check the installation with: mcpthreat-scan --help
+4. Tell me how to start the interactive interface myself:
+   mcpthreat-scan tui
+
+Show me each command before you run it.
+```
+
+> **Run the scans yourself.** We recommend not letting an AI agent scan or read untrusted
+> servers for you: scanned code can contain instructions aimed at AI agents, which is exactly
+> what the *Tool Poisoning* check looks for. Use the interactive interface or the command line.
+
+## Usage
+
+### Scan
+
+Scan a single file or a whole folder:
+
+```bash
+mcpthreat-scan scan path/to/mcp_server.py
+mcpthreat-scan scan path/to/project/
+```
+
+The default output is readable text. Tool-poisoning findings are first reported as
+*candidates*. With `--ai-review`, an OpenAI model reviews each candidate and confirms or
+dismisses it:
+
+```bash
+mcpthreat-scan scan path/to/mcp_server.py --ai-review
+```
+
+This needs an `OPENAI_API_KEY`. Without one, the scan does not abort and the candidate simply
+stays unconfirmed.
+
+### Compare two versions (rug-pull detection)
+
+A server that was harmless in version 1 can turn malicious in version 2. Compare two versions
+of the same file to see what changed in tool names, parameters, descriptions and hidden
+behavior:
+
+```bash
+mcpthreat-scan diff server_v1.py server_v2.py
+```
+
+### Output formats and CI
+
+| Option | Effect |
+|---|---|
+| `--format text` | Readable text (default) |
+| `--format json` | Machine-readable JSON |
+| `--format sarif` | SARIF 2.1.0, the standard for GitHub Code Scanning and other CI tools |
+| `--fail-on ERROR\|WARNING\|INFO` | Exit code 1 as soon as a finding is at least that severe. Without this flag the exit code is always 0. |
+
+> **Note:** JSON and SARIF include the flagged source line or description (`evidence`),
+> which comes straight from the scanned code. Do not pass these reports to an AI agent.
+
+Example for GitHub Actions: fail the build on errors and upload the results to GitHub
+Code Scanning.
+
+```yaml
+name: MCP security scan
+on: [push, pull_request]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install git+https://github.com/0xtahaa/MCPThreat-Scan.git
+      - run: mcpthreat-scan scan . --format sarif --fail-on ERROR > results.sarif
+      - if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+```
+
+### Interactive interface (TUI)
+
+```bash
+mcpthreat-scan tui
+```
+
+![Main menu](docs/tui/01_menu_empty.svg)
+
+From the main menu you can:
+
+- **Start New Scan:** pick a file or folder, confirm, follow the scan and read the summary
+- **View Findings:** filter by severity and open a detail view with description and
+  recommendation for each finding
+- **Compare Versions:** compare two files or two folders and see changed tool definitions
+  plus new and resolved findings
+- **Trusted Servers & Exclusions:** manage trusted servers and ignore rules
+- **Export:** save the report as JSON or SARIF with `E`
+
+![Finding details](docs/tui/07_findings_detail.svg)
+
+Shortcuts are shown on every screen. On the main menu: `S` scan, `D` compare, `?` help,
+`Q` quit. A running scan cannot be cancelled safely, because Semgrep runs as one external
+process.
+
+## Configuration
+
+### Ignoring findings
+
+If you have reviewed a finding and accept it, ignore it. In the TUI, open the finding and press
+`i`. The rule is saved in a file called `.mcpscannerignore` in the folder you run the scan from.
+
+On the command line or in CI you can edit that file yourself, one rule per line as
+`file:Category`:
+
+```text
+# reviewed and accepted
+src/server.py:Missing Audit Logging
+```
+
+Ignored findings are counted in the summary, so nothing disappears silently.
+
+### Network access and your data
+
+The scan reads your code locally. Two features talk to external services:
+
+| Feature | What is sent |
+|---|---|
+| Supply-chain check | Dependency names and versions are looked up in the OSV vulnerability database through `pip-audit` |
+| `--ai-review` | The text of each tool-poisoning candidate (the flagged tool description or handler output, not whole files) goes to the OpenAI API, default model `gpt-4o-mini` |
+
+For the AI review, the candidate text is wrapped in markers and the model is instructed to treat
+it as data only. Your `OPENAI_API_KEY` is read from the environment or a local `.env` file.
+Checking `package-lock.json` for npm projects needs the separate
+[osv-scanner](https://google.github.io/osv-scanner/) program on your `PATH`.
+
+## What it checks
+
+MCPThreat-Scan checks for the most common known vulnerabilities in MCP servers, based on OWASP.
 
 | Category | What is checked |
 |---|---|
-| Header Leak | Request headers in error messages |
-| Hardcoded Secret | Hardcoded API keys/tokens in source code |
-| Unscoped Environment Access | Unscoped `os.environ` access per tool call |
-| Tool Poisoning | Suspicious instruction patterns in tool docstrings (layer 1: Semgrep candidate; layer 2: optional AI review) + rug-pull detection via version comparison |
-| Supply Chain | Compares `requirements.txt` against the OSV vulnerability database via `pip-audit` |
-| Command Injection | `eval`/`exec`/`os.system`/`subprocess` with unchecked input |
-| Missing Audit Logging | Missing logging calls on security-relevant actions |
-| Capability Mismatch | Handler calls network/email without the name or docstring mentioning it (keyword heuristic, candidate only; does not detect deliberately deceptive descriptions) |
-| Typosquatting / Shadow Server | Declared server name closely resembles a known server from `known_mcp_servers.json` (candidate, not a hard statement) |
+| Hardcoded Secret | API keys or tokens written directly in the source code |
+| Command Injection | Tool input that reaches `eval`, `exec`, `os.system` or `subprocess` without checks |
+| Header Leak | Request headers ending up in error messages |
+| Unscoped Environment Access | Environment variables read on every tool call instead of once at startup |
+| Tool Poisoning | Hidden instructions for AI agents in tool descriptions or tool output. Rug pulls are found with `diff`. |
+| Supply Chain | Dependencies with known vulnerabilities (`requirements.txt`, and `package-lock.json` with osv-scanner) |
+| Missing Audit Logging | Security-relevant actions without any logging |
+| Capability Mismatch | A tool that makes network or email calls without saying so in its name or description. This is a keyword heuristic and does not detect deliberately deceptive descriptions. |
+| Typosquatting / Shadow Server | A server name that closely resembles a known server. A candidate, not proof. |
 
-Deliberately **not** in the MVP: precise scope measurement (needs runtime tracing),
-prompt-injection content filter, server operations monitoring, shadow-server discovery.
+Command Injection, Hardcoded Secret, Header Leak, Tool Poisoning and Unscoped Environment Access
+cover Python and TypeScript/JavaScript. Capability Mismatch and Missing Audit Logging currently
+cover Python only.
 
-## Current accuracy (benchmark, layer 1 — Semgrep + supply-chain OSV check)
+Not covered: precise scope measurement (needs runtime tracing), a general prompt-injection content
+filter, server operations monitoring and shadow-server discovery.
 
-Generated via `python -m benchmark.evaluate` (from the repo root) against `benchmark/`:
+## Benchmark
+
+The rules are tested against example servers with known vulnerabilities and known-clean
+examples in [`benchmark/`](benchmark/). Run it yourself from the repository root:
+
+```bash
+python -m benchmark.evaluate
+```
+
+Result without `--ai-review` (rules and supply-chain check only):
 
 | Category | TP | FP | FN | Precision | Recall |
 |---|---|---|---|---|---|
@@ -42,102 +265,45 @@ Generated via `python -m benchmark.evaluate` (from the repo root) against `bench
 | Unscoped Environment Access | 5 | 0 | 0 | 100 % | 100 % |
 | **Total** | **29** | **1** | **2** | **97 %** | **94 %** |
 
-Tool Poisoning is deliberately weaker: the Semgrep rule only delivers *candidates* (see
-[tool_poisoning.yaml](src/mcpthreat_scan/resources/rules/tool_poisoning.yaml)); the actual
-confirmation only happens in layer 2 (`--ai-review`), which is not measured here. The two
-false negatives are rug-pull cases from `benchmark/rugpull/` — see
-[Known limitations](#known-limitations--open-issues).
+**How to read this:** The examples were written together with the rules, so the benchmark
+shows that the rules do what they are meant to do. It is not an independent measurement of
+accuracy on real-world servers. A sample of 40 findings from public MCP servers is prepared for
+manual rating ([`benchmark/precision_sample.csv`](benchmark/precision_sample.csv)). The
+real-world precision will be published once it is rated.
 
-## Installation
+Tool Poisoning is weaker on purpose: the rules only deliver candidates, and `--ai-review` is
+what confirms them. The AI review is not measured here. The two misses are rug-pull cases from
+`benchmark/rugpull/`, see [Limitations](#limitations).
 
-Requirements: Python 3.12+, Git.
+## Limitations
 
-```bash
-git clone https://github.com/0xtahaa/MCPThreat-Scan.git
-cd MCPThreat-Scan
-python -m venv .venv
-```
+- **Findings are candidates, not proof.** Some checks (Tool Poisoning, Capability Mismatch,
+  Typosquatting) are heuristics. They can raise false alarms, and a carefully disguised attack
+  can slip through. `--ai-review` helps to confirm Tool Poisoning candidates, but it is not
+  measured in the benchmark.
+- **Only static analysis.** The scanner never runs the code, so it cannot see what a server does
+  at runtime.
+- **Languages:** Python and TypeScript/JavaScript. Capability Mismatch and Missing Audit Logging
+  cover Python only.
+- **Rug-pull detection compares two versions that you provide.** It does not watch a server over
+  time. In the benchmark it misses two cases (`benchmark/rugpull/`), and these cases are not part
+  of the automatic benchmark run.
+- **No real-world accuracy figures yet.** See [Benchmark](#benchmark).
 
-Windows: `.venv\Scripts\activate` · macOS/Linux: `source .venv/bin/activate`
+## Contributing
 
-```bash
-pip install -r requirements.txt
-```
-
-The project uses the `src` layout; so that `python -m mcpthreat_scan…` and `pytest` can find the
-package, install it once in editable mode (dependencies come from `requirements.txt`):
-
-```bash
-pip install -e .
-```
-
-For the optional layer-2 AI review (`--ai-review`), store an `OPENAI_API_KEY` in a local
-`.env` file (see `.gitignore` — it is never committed).
-
-## Usage
-
-**Scan a single file or a folder:**
+Issues and pull requests are welcome. Before opening a pull request, run the tests and the
+benchmark:
 
 ```bash
-python -m mcpthreat_scan.cli.main scan path/to/mcp_server.py
+pip install -e ".[dev]"
+pytest
+python -m benchmark.evaluate
 ```
 
-```bash
-python -m mcpthreat_scan.cli.main scan path/to/project/ --format json
-```
+## Development
 
-With the layer-2 AI review for tool-poisoning candidates (requires `OPENAI_API_KEY`; if the key
-is missing, the scan does not abort and the candidate stays unconfirmed):
-
-```bash
-python -m mcpthreat_scan.cli.main scan path/to/mcp_server.py --ai-review
-```
-
-**Compare two versions of the same file for rug pulls** (tool name/parameters/docstring/
-hidden behavior):
-
-```bash
-python -m mcpthreat_scan.cli.main diff server_v1.py server_v2.py
-```
-
-**Example against the benchmark fixtures:**
-
-```bash
-python -m mcpthreat_scan.cli.main scan benchmark/vulnerable/command_injection.py
-```
-
-```
-benchmark\vulnerable\command_injection.py:
-  Line 9 [Command Injection] ERROR: Command Injection: A function parameter flows unchecked into a
-  shell command or eval/exec. ...
-
-Summary: 8 of 9 OWASP MCP categories without findings.
-Categories with findings: Command Injection
-```
-
-**Output format and CI threshold:** `--format text|json|sarif`; `--fail-on ERROR|WARNING|INFO` returns
-exit code 1 as soon as a finding is at least that severe (without the flag the exit code stays 0).
-
-**Interactive interface (Textual):**
-
-```bash
-python -m mcpthreat_scan.cli.main tui
-```
-
-The TUI (Autorea look: dark, restrained green, with the Autorea mark and the ASCII "MCPThreat-Scan" lettering at the top; narrow terminals get a compact header) offers: **Start New Scan** (select and validate a
-target, confirm, watch the phases, read the summary), **Compare Versions** (two files or two folders:
-changed files, tool-definition changes, new and resolved findings), **View Findings** (severity
-filter, detail panel with rule, evidence and recommendation), **Trusted Servers & Exclusions**
-(trusted servers and ignore rules with scope and source; remove/revoke asks first) and
-**Settings & Help**. Reports can be exported as JSON or SARIF with `E` (same renderers as
-`--format json|sarif`). Shortcuts are shown on each screen; on the main menu: `S` scan, `D` compare,
-`?` help, `Q` quit. Screenshots: `docs/tui/`. A running scan cannot be cancelled safely (Semgrep runs
-as one external process).
-
-Each finding in JSON and SARIF output now also carries `rule_id` and `evidence` (the flagged source
-line or description; never set for hardcoded secrets).
-
-## Project structure
+### Project structure
 
 ```
 src/mcpthreat_scan/
@@ -155,30 +321,15 @@ benchmark/   Test cases with known results (vulnerable/, clean/, rugpull/) + exp
 tests/       Unit tests (pytest)
 ```
 
-## Known limitations / open issues
+### Known issues
 
 - **`policy/reputation.py` is not used by the scan.** The whitelist/fingerprint mechanism (meant to
   skip costly re-review for established, unchanged servers) is not wired into the scan pipeline;
   only the TUI management (`list_reviewed`, `revoke_review`) and the tests call it.
-- **`benchmark/rugpull/` does not feed into `benchmark/evaluate.py`.** The precision/recall
-  measurement uses only the `scan` path; rug-pull detection runs through the separate `diff` path
-  and is therefore not measured automatically.
-- **Tool Poisoning has the weakest hit rate** (86 % precision / 75 % recall in layer 1) — this is
-  expected without `--ai-review`, since the Semgrep rule deliberately only delivers candidates.
 - Two tests (`test_ai_review.py`, real OpenAI call) are skipped without `OPENAI_API_KEY`. Tests
   with an OSV query via `pip-audit` (`test_dependency_check.py`) need network access and may fail
-  without it — an external dependency, not a code error.
-
-## Running the tests
-
-```bash
-pytest
-```
-
-```bash
-python -m benchmark.evaluate
-```
+  without it, which is an external dependency and not a code error.
 
 ## License
 
-No license has been chosen yet.
+Apache License 2.0, see [LICENSE](LICENSE).
