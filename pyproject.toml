@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,21 @@ version = "0.1.0"
 description = "Static zero-execution security scanner for MCP server source code"
 readme = "README.md"
 requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Taha Al-Faqih" }]
+keywords = ["mcp", "security", "scanner", "static-analysis", "semgrep"]
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Environment :: Console",
+]
 dynamic = ["dependencies"]
+
+[project.urls]
+Homepage = "https://github.com/0xtahaa/MCPThreat-Scan"
+Source = "https://github.com/0xtahaa/MCPThreat-Scan"
+Issues = "https://github.com/0xtahaa/MCPThreat-Scan/issues"
 
 [project.scripts]
 mcpthreat-scan = "mcpthreat_scan.cli.main:main"
