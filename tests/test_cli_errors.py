@@ -71,7 +71,7 @@ def test_usage_errors_exit_two_via_argparse(cli_main, capsys, argv):
         cli_main(argv)
 
     assert excinfo.value.code == 2
-    assert capsys.readouterr().err.startswith("usage: cli.main")
+    assert capsys.readouterr().err.startswith("usage: mcpthreat-scan")
 
 
 def test_failing_threshold_is_exit_one_but_after_a_complete_report(cli_main, capsys, monkeypatch, tmp_path):

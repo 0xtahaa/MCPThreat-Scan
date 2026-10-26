@@ -94,9 +94,9 @@ def test_tui_uses_the_injected_starter():
     assert started == [True]
 
 
-def test_parser_program_name_stays_cli_main_for_compatibility(capsys):
+def test_parser_program_name_is_mcpthreat_scan(capsys):
     with pytest.raises(SystemExit) as excinfo:
         target.main([])
 
     assert excinfo.value.code == 2
-    assert capsys.readouterr().err.startswith("usage: cli.main ")
+    assert capsys.readouterr().err.startswith("usage: mcpthreat-scan ")

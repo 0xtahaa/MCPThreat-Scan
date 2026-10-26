@@ -87,7 +87,7 @@ def tui_command(args: argparse.Namespace, run_tui: TuiRunner | None = None) -> i
 def build_parser(run_tui: TuiRunner | None = None) -> argparse.ArgumentParser:
     """Build the CLI argument parser for 'scan' and 'diff' commands."""
     parser = argparse.ArgumentParser(
-        prog="cli.main",
+        prog="mcpthreat-scan",
         description="Static zero-execution security scanner for MCP server source code.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)

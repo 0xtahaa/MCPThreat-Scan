@@ -23,7 +23,7 @@ def test_subcommands_are_scan_diff_and_tui_and_required(parser, capsys):
     with pytest.raises(SystemExit) as excinfo:
         parser.parse_args([])
     assert excinfo.value.code == 2
-    assert "usage: cli.main" in capsys.readouterr().err
+    assert "usage: mcpthreat-scan" in capsys.readouterr().err
 
 
 def test_scan_defaults_and_options(parser):
