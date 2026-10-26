@@ -13,6 +13,10 @@ access to their data and tools. Because the scanned code is never executed, it i
 scan servers you do not trust yet. If you build MCP servers yourself, use it to check your
 own code before a release.
 
+[![Scanning a folder in the interactive interface](assets/demo/demo.gif)](assets/demo/demo.mp4)
+
+*Scanning a folder in the interactive interface. Click the animation to watch the 30-second video.*
+
 ## Example
 
 ```text
