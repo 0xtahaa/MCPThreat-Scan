@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300" role="img" aria-labelledby="t d">
+  <title id="t">MCPThreat-Scan</title>
+  <desc id="d">Zero-Execution Static Analysis for MCP servers</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#101613"/>
+      <stop offset="1" stop-color="#16251C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="170" cy="150" r="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#CFE9C8" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#CFE9C8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#CFE9C8" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#CFE9C8" stop-opacity="0"/>
+      <stop offset="0.8" stop-color="#CFE9C8" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#CFE9C8" stop-opacity="0.75"/>
+    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+    <clipPath id="card"><rect width="1200" height="300" rx="22"/></clipPath>
+    <clipPath id="panel"><rect x="880" y="50" width="260" height="200" rx="14"/></clipPath>
+  </defs>
+  <style>
+    .mono { font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, ui-monospace, "SFMono-Regular", Menlo, monospace; }
+    .beam { animation: sweep 4.5s ease-in-out infinite; }
+    .hit  { animation: pulse 4.5s ease-in-out infinite; }
+    @keyframes sweep { 0% { transform: translateY(0); } 50% { transform: translateY(164px); } 100% { transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: .75; } 45%, 55% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .beam, .hit { animation: none; } }
+  </style>
+
+  <g clip-path="url(#card)">
+    <rect width="1200" height="300" fill="url(#bg)"/>
+    <rect width="1200" height="300" fill="url(#grid)"/>
+    <rect width="1200" height="300" fill="url(#glow)"/>
+  </g>
+  <rect x="0.75" y="0.75" width="1198.5" height="298.5" rx="21.5" fill="none" stroke="#365344" stroke-width="1.5"/>
+
+  <!-- Autorea mark: three planes (same polygons as the TUI logo), with glow -->
+  <g transform="translate(69 45) scale(0.78)">
+    <g filter="url(#blur)" opacity="0.55" fill="#CFE9C8">
+      <polygon points="43,56 156,12 156,87"/>
+      <polygon points="32,63 214,114 32,172"/>
+      <polygon points="57,179 227,121 227,258"/>
+    </g>
+    <polygon points="43,56 156,12 156,87" fill="#CFE9C8"/>
+    <polygon points="32,63 214,114 32,172" fill="#CFE9C8" fill-opacity="0.82"/>
+    <polygon points="57,179 227,121 227,258" fill="#CFE9C8" fill-opacity="0.62"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text class="mono" x="300" y="152" font-size="70" font-weight="800" textLength="528" lengthAdjust="spacingAndGlyphs" fill="#E8F2EB">MCPThreat<tspan fill="#CFE9C8">-Scan</tspan></text>
+  <text class="mono" x="302" y="196" font-size="21" textLength="520" lengthAdjust="spacingAndGlyphs" fill="#AFC7B7">Zero-Execution Static Analysis for MCP servers</text>
+
+  <!-- Feature chips -->
+  <g class="mono" font-size="13" font-weight="700" fill="#CFE9C8">
+    <rect x="302" y="224" width="156" height="30" rx="15" fill="#18241D" stroke="#365344"/>
+    <text x="380" y="244" text-anchor="middle" textLength="124" lengthAdjust="spacingAndGlyphs">ZERO-EXECUTION</text>
+    <rect x="470" y="224" width="132" height="30" rx="15" fill="#18241D" stroke="#365344"/>
+    <text x="536" y="244" text-anchor="middle" textLength="100" lengthAdjust="spacingAndGlyphs">OWASP-BASED</text>
+    <rect x="614" y="224" width="136" height="30" rx="15" fill="#18241D" stroke="#365344"/>
+    <text x="682" y="244" text-anchor="middle" textLength="104" lengthAdjust="spacingAndGlyphs">SARIF · JSON</text>
+  </g>
+
+  <!-- Scan panel: code lines, one flagged, a beam sweeping over them -->
+  <rect x="880" y="50" width="260" height="200" rx="14" fill="#0C110F" stroke="#365344" stroke-width="1.5"/>
+  <circle cx="900" cy="68" r="4" fill="#F0716B"/>
+  <circle cx="916" cy="68" r="4" fill="#E3B341"/>
+  <circle cx="932" cy="68" r="4" fill="#7FB5D6"/>
+  <g clip-path="url(#panel)">
+    <g fill="#365344">
+      <rect x="904" y="94" width="120" height="8" rx="4"/>
+      <rect x="904" y="116" width="170" height="8" rx="4"/>
+      <rect x="918" y="138" width="90" height="8" rx="4"/>
+      <rect x="904" y="182" width="110" height="8" rx="4"/>
+      <rect x="918" y="204" width="160" height="8" rx="4"/>
+      <rect x="904" y="226" width="100" height="8" rx="4"/>
+    </g>
+    <g class="hit">
+      <rect x="880" y="156" width="260" height="22" fill="#F0716B" fill-opacity="0.12"/>
+      <rect x="918" y="160" width="136" height="8" rx="4" fill="#F0716B"/>
+      <rect x="880" y="156" width="3" height="22" fill="#F0716B"/>
+      <text class="mono" x="1100" y="169" font-size="11" font-weight="700" fill="#F0716B" text-anchor="middle">HIGH</text>
+    </g>
+    <rect class="beam" x="880" y="50" width="260" height="36" fill="url(#beam)"/>
+  </g>
+</svg>
